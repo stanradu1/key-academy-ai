@@ -1,16 +1,13 @@
-export const config = {
-  runtime: 'edge',
-};
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-export default async function handler(req) {
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { messages, system } = await req.json();
+  const { messages, system } = req.body;
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -22,16 +19,12 @@ export default async function handler(req) {
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 1024,
-      system: system || 'You are a helpful financial education assistant.',
+      system: system || 'You are a helpful assistant.',
       messages,
     }),
   });
 
   const data = await response.json();
   const reply = data.content?.map((b) => b.text || '').join('') || 'Error';
-
-  return new Response(JSON.stringify({ reply }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return res.status(200).json({ reply });
 }
