@@ -316,7 +316,7 @@ async function sendMsg() {
       body: JSON.stringify({ messages: history, system: SYSTEM })
     });
     const data = await res.json();
-    const reply = data.reply || 'Something went wrong. Try again.';
+    const reply = data.reply || data.content?.[0]?.text || 'Something went wrong.';
     history.push({ role: 'assistant', content: reply });
     typing.remove();
     addMsg(reply.replace(/\n/g, '<br>'), 'ai', scamCheck(reply));
