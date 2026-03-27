@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Key Academy AI — Crypto & Invest Advisor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --surface2: #1a1a26;
+      --border: rgba(255,255,255,0.07);
+      --gold: #f0b429;
+      --gold-dim: rgba(240,180,41,0.12);
+      --text: #f0f0f0;
+      --text-dim: rgba(240,240,240,0.45);
+      --text-mid: rgba(240,240,240,0.7);
+      --danger: #ff6b6b;
+      --danger-bg: rgba(255,107,107,0.08);
+      --radius: 14px;
+      --radius-sm: 8px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+
+    /* Background grid */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(240,180,41,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(240,180,41,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #app {
+      position: relative; z-index: 1;
+      display: flex; flex-direction: column;
+      height: 100vh; max-width: 780px;
+      margin: 0 auto; padding: 0 16px;
+    }
+
+    /* Header */
+    .header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 20px 0 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      animation: fadeDown 0.5s ease both;
+    }
+    .logo {
+      width: 42px; height: 42px; border-radius: 50%;
+      background: linear-gradient(135deg, #1a1a2e, #2a2a45);
+      border: 1px solid rgba(240,180,41,0.3);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .logo svg { width: 20px; height: 20px; fill: none; stroke: var(--gold); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .header-text {}
+    .header-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: 0.01em; }
+    .header-sub { font-size: 11px; color: var(--text-dim); margin-top: 1px; letter-spacing: 0.04em; text-transform: uppercase; }
+    .status { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-dim); }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+
+    /* Pills */
+    .pills-wrap {
+      padding: 14px 0 10px;
+      flex-shrink: 0;
+      animation: fadeDown 0.5s 0.1s ease both;
+    }
+    .pills-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+    .pills { display: flex; flex-wrap: wrap; gap: 6px; }
+    .pill {
+      font-size: 11px; padding: 5px 12px;
+      border-radius: 999px; cursor: pointer;
+      border: 1px solid var(--border);
+      color: var(--text-mid);
+      background: var(--surface);
+      transition: all 0.2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .pill:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
+
+    /* Chat */
+    .chat {
+      flex: 1; overflow-y: auto;
+      padding: 16px 0;
+      display: flex; flex-direction: column; gap: 12px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--surface2) transparent;
+      animation: fadeUp 0.5s 0.2s ease both;
+    }
+    .chat::-webkit-scrollbar { width: 4px; }
+    .chat::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 4px; }
+
+    .msg { display: flex; gap: 10px; max-width: 100%; }
+    .msg.user { flex-direction: row-reverse; }
+
+    .avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--surface2); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; flex-shrink: 0; margin-top: 2px;
+    }
+    .msg.user .avatar { background: var(--gold-dim); border-color: rgba(240,180,41,0.2); }
+
+    .bubble {
+      max-width: 78%;
+      padding: 11px 15px;
+      font-size: 14px; line-height: 1.65;
+      border-radius: var(--radius);
+    }
+    .msg.ai .bubble {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 4px var(--radius) var(--radius) var(--radius);
+    }
+    .msg.user .bubble {
+      background: linear-gradient(135deg, #1e1e35, #252540);
+      border: 1px solid rgba(240,180,41,0.15);
+      color: var(--text);
+      border-radius: var(--radius) 4px var(--radius) var(--radius);
+    }
+    .msg.loading .bubble { color: var(--text-dim); font-style: italic; }
+
+    .warn-tag {
+      display: inline-block;
+      background: rgba(255,107,107,0.12);
+      color: #ff9999;
+      border: 1px solid rgba(255,107,107,0.2);
+      font-size: 10px; font-weight: 500;
+      padding: 2px 8px; border-radius: 4px;
+      margin-bottom: 7px;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+
+    /* Input */
+    .input-area {
+      padding: 14px 0 20px;
+      flex-shrink: 0;
+      animation: fadeUp 0.5s 0.3s ease both;
+    }
+    .input-row {
+      display: flex; gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 6px 6px 6px 16px;
+      transition: border-color 0.2s;
+    }
+    .input-row:focus-within { border-color: rgba(240,180,41,0.3); }
+    #msg-input {
+      flex: 1; background: none; border: none; outline: none;
+      font-size: 14px; color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      padding: 6px 0;
+    }
+    #msg-input::placeholder { color: var(--text-dim); }
+    #send-btn {
+      padding: 9px 18px;
+      background: var(--gold);
+      color: #0a0a0f;
+      border: none; border-radius: 10px;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer;
+      font-family: 'Syne', sans-serif;
+      transition: opacity 0.15s, transform 0.1s;
+      white-space: nowrap;
+    }
+    #send-btn:hover { opacity: 0.9; }
+    #send-btn:active { transform: scale(0.97); }
+    #send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .disclaimer {
+      text-align: center; font-size: 10px;
+      color: var(--text-dim); margin-top: 8px;
+      letter-spacing: 0.03em;
+    }
+
+    @keyframes fadeDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    @keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+    .typing-dots span {
+      display: inline-block; width: 5px; height: 5px; border-radius: 50%;
+      background: var(--text-dim); margin: 0 2px;
+      animation: pulse 1.2s ease infinite;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @media (max-width: 600px) {
+      .bubble { max-width: 90%; font-size: 13px; }
+      .header-title { font-size: 14px; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <div class="header">
+    <div class="logo">
+      <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    </div>
+    <div class="header-text">
+      <div class="header-title">Key Academy AI</div>
+      <div class="header-sub">Crypto & Invest Advisor</div>
+    </div>
+    <div class="status"><div class="dot"></div> Online</div>
+  </div>
+
+  <div class="pills-wrap">
+    <div class="pills-label">Quick topics</div>
+    <div class="pills">
+      <span class="pill" onclick="ask('What is a rug pull and how do I spot one?')">Rug pull</span>
+      <span class="pill" onclick="ask('How does pump and dump work in crypto?')">Pump & dump</span>
+      <span class="pill" onclick="ask('What are Ponzi schemes in crypto with real examples?')">Crypto Ponzi</span>
+      <span class="pill" onclick="ask('How do I do due diligence on a crypto project step by step?')">Due diligence</span>
+      <span class="pill" onclick="ask('What are the biggest red flags of a crypto scam?')">Red flags</span>
+      <span class="pill" onclick="ask('What is Kaspa (KAS) and why is it interesting?')">Kaspa (KAS)</span>
+      <span class="pill" onclick="ask('Explain dollar cost averaging for crypto with a practical example')">DCA strategy</span>
+      <span class="pill" onclick="ask('How should a beginner manage risk in a crypto portfolio?')">Risk management</span>
+      <span class="pill" onclick="ask('I am a complete beginner in investing. What should I learn first?')">Beginner guide</span>
+    </div>
+  </div>
+
+  <div class="chat" id="chat">
+    <div class="msg ai">
+      <div class="avatar">🔑</div>
+      <div class="bubble">
+        Hey! I'm the <strong>Key Academy AI</strong> — built to help you invest smarter and avoid getting scammed.<br><br>
+        Ask me anything about crypto, stocks, scam detection, due diligence, or investment strategy.
+      </div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <div class="input-row">
+      <input id="msg-input" type="text" placeholder="Ask anything about crypto, stocks, or scams..." />
+      <button id="send-btn" onclick="sendMsg()">Send →</button>
+    </div>
+    <div class="disclaimer">Not financial advice · Educational purposes only · Key Academy Society</div>
+  </div>
+
+</div>
+
+<script>
+const chat = document.getElementById('chat');
+const input = document.getElementById('msg-input');
+const btn = document.getElementById('send-btn');
+const history = [];
+
+const SYSTEM = `You are the Key Academy Society AI — a financial education assistant specializing in:
+- Crypto: Bitcoin, Ethereum, Kaspa, altcoins, DeFi, NFTs, on-chain analysis
+- Stocks and traditional investing basics
+- Scam identification: rug pulls, pump & dump, Ponzi schemes, honeypots, phishing, fake teams, fake audits
+- Due diligence: how to research a project before investing
+- Realistic strategies: DCA, risk management, portfolio allocation, position sizing
+
+Rules:
+- Reply in English by default. Match the user's language if they switch.
+- Be direct, clear, no hype, no promises of profit
+- For any scam or high-risk topic, always include a clear warning
+- Never give direct financial advice — you are educational only
+- Max 200 words per response
+- Use concrete, real-world examples
+- Tone: knowledgeable and friendly, never preachy`;
+
+function scamCheck(t) {
+  return ['scam','rug pull','ponzi','pump and dump','honeypot','phishing','fake','fraud','red flag','exit scam'].some(k => t.toLowerCase().includes(k));
+}
+
+function addMsg(content, role, warn) {
+  const d = document.createElement('div');
+  d.className = 'msg ' + role;
+  const av = document.createElement('div');
+  av.className = 'avatar';
+  av.textContent = role === 'user' ? '👤' : '🔑';
+  const b = document.createElement('div');
+  b.className = 'bubble';
+  if (warn) b.innerHTML = '<div class="warn-tag">⚠ High risk</div><div>' + content + '</div>';
+  else b.innerHTML = content;
+  d.appendChild(av); d.appendChild(b);
+  chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
+  return d;
+}
+
+function addTyping() {
+  const d = document.createElement('div');
+  d.className = 'msg ai loading';
+  d.innerHTML = '<div class="avatar">🔑</div><div class="bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>';
+  chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
+  return d;
+}
+
+async function ask(q) { input.value = q; await sendMsg(); }
+
+async function sendMsg() {
+  const text = input.value.trim();
+  if (!text || btn.disabled) return;
+  input.value = '';
+  addMsg(text, 'user', false);
+  history.push({ role: 'user', content: text });
+  btn.disabled = true;
+  const typing = addTyping();
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: history, system: SYSTEM })
+    });
+    const data = await res.json();
+    const reply = data.reply || 'Something went wrong. Try again.';
+    history.push({ role: 'assistant', content: reply });
+    typing.remove();
+    addMsg(reply.replace(/\n/g, '<br>'), 'ai', scamCheck(reply));
+  } catch(e) {
+    typing.remove();
+    addMsg('Connection error. Please try again.', 'ai', false);
+  }
+
+  btn.disabled = false;
+  input.focus();
+}
+
+input.addEventListener('keydown', e => { if (e.key === 'Enter') sendMsg(); });
+</script>
+</body>
+</html>
